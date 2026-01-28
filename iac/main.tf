@@ -55,9 +55,11 @@ resource "azurerm_role_assignment" "acrpull" {
 # - si var.image_tag == "bootstrap": usa una imagen pública (evita fallo en la creación inicial)
 # - si no: usa la imagen en ACR: <login_server>/hola:<image_tag>
 locals {
-  image_name = var.image_tag == "bootstrap"
+  image_name = (
+    var.image_tag == "bootstrap"
     ? local.bootstrap_image
     : "${azurerm_container_registry.acr.login_server}/hola:${var.image_tag}"
+  )
 }
 
 resource "azurerm_container_app" "app" {
