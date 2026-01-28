@@ -6,6 +6,9 @@ locals {
   cae_name = "${var.prefix}-${var.suffix}-${var.environment}-cae"
   law_name = "${var.prefix}-${var.suffix}-${var.environment}-law"
   id_name  = "${var.prefix}-${var.suffix}-${var.environment}-id"
+
+  # Imagen pública para el primer despliegue (evita MANIFEST_UNKNOWN si aún no existe la imagen en ACR)
+  bootstrap_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
 }
 
 resource "azurerm_resource_group" "rg" {
@@ -48,9 +51,13 @@ resource "azurerm_role_assignment" "acrpull" {
   principal_id         = azurerm_user_assigned_identity.uai.principal_id
 }
 
-# Imagen: se construirá y subirá como: <login_server>/hola:<image_tag>
+# Imagen:
+# - si var.image_tag == "bootstrap": usa una imagen pública (evita fallo en la creación inicial)
+# - si no: usa la imagen en ACR: <login_server>/hola:<image_tag>
 locals {
-  image_name = "${azurerm_container_registry.acr.login_server}/hola:${var.image_tag}"
+  image_name = var.image_tag == "bootstrap"
+    ? local.bootstrap_image
+    : "${azurerm_container_registry.acr.login_server}/hola:${var.image_tag}"
 }
 
 resource "azurerm_container_app" "app" {

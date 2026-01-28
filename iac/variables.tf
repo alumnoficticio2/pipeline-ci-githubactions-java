@@ -20,7 +20,8 @@ variable "environment" {
 
 variable "image_tag" {
   type        = string
-  description = "Tag de imagen (por ejemplo SHA corto)"
+  description = "Tag de imagen (por ejemplo SHA corto). Usa 'bootstrap' para despliegue inicial."
+  default     = "bootstrap"
 }
 
 variable "container_port" {
