@@ -7,7 +7,7 @@ locals {
   acr_name = "${var.prefix}${local.suf_short}${local.env_short}"
 
   # Nombres con guiones (mantenerlos <= 32 cuando aplique)
-  rg_name  = "${var.prefix}-${var.suf_short}-${local.env_short}-rg"
+  rg_name  = "${var.prefix}-${local.suf_short}-${local.env_short}-rg"
   app_name = "${var.prefix}-${local.suf_short}-${local.env_short}-app"
   cae_name = "${var.prefix}-${local.suf_short}-${local.env_short}-cae"
   law_name = "${var.prefix}-${local.suf_short}-${local.env_short}-law"
