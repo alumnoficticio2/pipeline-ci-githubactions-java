@@ -71,7 +71,9 @@ jobs:
         run: echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
 
       - name: Docker login to ACR
-        run: az acr login --name ${{ env.ACR_LOGIN_SERVER%%.* }}
+        run: |
+          # ACR_LOGIN_SERVER tiene formato: <acrname>.azurecr.io
+          az acr login --name "${ACR_LOGIN_SERVER%%.*}"
 
       - name: Build & push Docker image to ACR
         run: |
@@ -136,7 +138,9 @@ jobs:
         run: echo "ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)" >> $GITHUB_ENV
 
       - name: Docker login to ACR
-        run: az acr login --name ${{ env.ACR_LOGIN_SERVER%%.* }}
+        run: |
+          # ACR_LOGIN_SERVER tiene formato: <acrname>.azurecr.io
+          az acr login --name "${ACR_LOGIN_SERVER%%.*}"
 
       - name: Build & push Docker image to ACR (prod tag)
         run: |
