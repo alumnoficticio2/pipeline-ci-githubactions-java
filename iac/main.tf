@@ -1,11 +1,17 @@
 locals {
-  # ACR name: solo letras/números y único globalmente
-  acr_name = "${var.prefix}${var.suffix}${var.environment}"
-  rg_name  = "${var.prefix}-${var.suffix}-${var.environment}-rg"
-  app_name = "${var.prefix}-${var.suffix}-${var.environment}-app"
-  cae_name = "${var.prefix}-${var.suffix}-${var.environment}-cae"
-  law_name = "${var.prefix}-${var.suffix}-${var.environment}-law"
-  id_name  = "${var.prefix}-${var.suffix}-${var.environment}-id"
+  # Acortadores para cumplir límites de Azure Container Apps (2-32 chars)
+  env_short = var.environment == "production" ? "prd" : "stg"
+  suf_short = substr(var.suffix, 0, 8)
+
+  # ACR name: solo letras/números y único globalmente (sin guiones)
+  acr_name = "${var.prefix}${local.suf_short}${local.env_short}"
+
+  # Nombres con guiones (mantenerlos <= 32 cuando aplique)
+  rg_name  = "${var.prefix}-${var.suf_short}-${local.env_short}-rg"
+  app_name = "${var.prefix}-${local.suf_short}-${local.env_short}-app"
+  cae_name = "${var.prefix}-${local.suf_short}-${local.env_short}-cae"
+  law_name = "${var.prefix}-${local.suf_short}-${local.env_short}-law"
+  id_name  = "${var.prefix}-${local.suf_short}-${local.env_short}-id"
 
   # Imagen pública para el primer despliegue (evita MANIFEST_UNKNOWN si aún no existe la imagen en ACR)
   bootstrap_image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
