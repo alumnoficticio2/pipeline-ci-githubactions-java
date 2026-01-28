@@ -38,6 +38,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
       - name: Login to Azure (OIDC)
         uses: azure/login@v2
         with:
@@ -104,6 +109,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
 
       - name: Login to Azure (OIDC)
         uses: azure/login@v2
