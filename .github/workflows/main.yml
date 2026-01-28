@@ -2,17 +2,17 @@ name: CD - Build Docker, Push to ACR, Deploy to Azure Container Apps
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     tags:
       - "v*"
 
 permissions:
-  id-token: write   # necesario para OIDC con Azure
+  id-token: write
   contents: read
 
 env:
   LOCATION: ${{ vars.AZURE_LOCATION }}
-  SUFFIX:   ${{ vars.SUFFIX }}
+  SUFFIX: ${{ vars.SUFFIX }}
 
 jobs:
   build_test:
@@ -35,6 +35,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
 
+    # ARM_* a nivel de job para que aplique a init/apply/output
+    env:
+      ARM_USE_OIDC: true
+      ARM_USE_AZUREAD: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -53,23 +61,21 @@ jobs:
       - name: Compute image tag
         run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Terraform init (staging backend)
+      - name: Terraform init (staging backend) - OIDC
         working-directory: iac
         run: |
           terraform init \
             -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ vars.TFSTATE_CONTAINER }}" \
-            -backend-config="key=${{ vars.TFSTATE_KEY_STAGING }}"
+            -backend-config="key=${{ vars.TFSTATE_KEY_STAGING }}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="tenant_id=${{ vars.AZURE_TENANT_ID }}" \
+            -backend-config="client_id=${{ vars.AZURE_CLIENT_ID }}"
 
-      - name: Terraform apply (creates/updates infra + points to image tag)
+      - name: Terraform apply (staging) - create/update infra
         working-directory: iac
-        env:
-          ARM_USE_OIDC: true
-          ARM_USE_AZUREAD: true
-          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         run: |
           terraform apply -auto-approve \
             -var="location=${{ env.LOCATION }}" \
@@ -88,10 +94,10 @@ jobs:
 
       - name: Build & push Docker image to ACR
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/hola:${{ env.IMAGE_TAG }} .
-          docker push ${{ env.ACR_LOGIN_SERVER }}/hola:${{ env.IMAGE_TAG }}
+          docker build -t "${ACR_LOGIN_SERVER}/hola:${IMAGE_TAG}" .
+          docker push "${ACR_LOGIN_SERVER}/hola:${IMAGE_TAG}"
 
-      - name: Terraform apply again (ensure app uses pushed image)
+      - name: Terraform apply again (staging) - ensure app uses pushed image
         working-directory: iac
         run: |
           terraform apply -auto-approve \
@@ -113,6 +119,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
 
+    # ARM_* a nivel de job para que aplique a init/apply/output
+    env:
+      ARM_USE_OIDC: true
+      ARM_USE_AZUREAD: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -131,23 +145,21 @@ jobs:
       - name: Compute image tag (use git tag name)
         run: echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-      - name: Terraform init (prod backend)
+      - name: Terraform init (production backend) - OIDC
         working-directory: iac
         run: |
           terraform init \
             -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ vars.TFSTATE_CONTAINER }}" \
-            -backend-config="key=${{ vars.TFSTATE_KEY_PRODUCTION }}"
+            -backend-config="key=${{ vars.TFSTATE_KEY_PRODUCTION }}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="tenant_id=${{ vars.AZURE_TENANT_ID }}" \
+            -backend-config="client_id=${{ vars.AZURE_CLIENT_ID }}"
 
-      - name: Terraform apply (prod)
+      - name: Terraform apply (production) - create/update infra
         working-directory: iac
-        env:
-          ARM_USE_OIDC: true
-          ARM_USE_AZUREAD: true
-          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         run: |
           terraform apply -auto-approve \
             -var="location=${{ env.LOCATION }}" \
@@ -166,10 +178,10 @@ jobs:
 
       - name: Build & push Docker image to ACR (prod tag)
         run: |
-          docker build -t ${{ env.ACR_LOGIN_SERVER }}/hola:${{ env.IMAGE_TAG }} .
-          docker push ${{ env.ACR_LOGIN_SERVER }}/hola:${{ env.IMAGE_TAG }}
+          docker build -t "${ACR_LOGIN_SERVER}/hola:${IMAGE_TAG}" .
+          docker push "${ACR_LOGIN_SERVER}/hola:${IMAGE_TAG}"
 
-      - name: Terraform apply again (ensure prod uses pushed image)
+      - name: Terraform apply again (production) - ensure app uses pushed image
         working-directory: iac
         run: |
           terraform apply -auto-approve \
@@ -184,4 +196,3 @@ jobs:
           APP_URL=$(terraform output -raw app_url)
           echo "Testing $APP_URL"
           curl -fsS "$APP_URL" | head -n 20
-
