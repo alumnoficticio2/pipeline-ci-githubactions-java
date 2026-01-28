@@ -64,6 +64,12 @@ jobs:
 
       - name: Terraform apply (creates/updates infra + points to image tag)
         working-directory: iac
+        env:
+          ARM_USE_OIDC: true
+          ARM_USE_AZUREAD: true
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         run: |
           terraform apply -auto-approve \
             -var="location=${{ env.LOCATION }}" \
@@ -136,6 +142,12 @@ jobs:
 
       - name: Terraform apply (prod)
         working-directory: iac
+        env:
+          ARM_USE_OIDC: true
+          ARM_USE_AZUREAD: true
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         run: |
           terraform apply -auto-approve \
             -var="location=${{ env.LOCATION }}" \
