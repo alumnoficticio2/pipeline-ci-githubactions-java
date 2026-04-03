@@ -36,6 +36,10 @@ jobs:
     environment: staging
 
     env:
+      # ✅ Estas vars se resuelven desde el GitHub Environment "staging"
+      LOCATION: ${{ vars.AZURE_LOCATION }}
+      SUFFIX: ${{ vars.SUFFIX }}
+
       ARM_USE_OIDC: true
       ARM_USE_AZUREAD: true
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
@@ -115,6 +119,10 @@ jobs:
     environment: production
 
     env:
+      # ✅ Estas vars se resuelven desde el GitHub Environment "production"
+      LOCATION: ${{ vars.AZURE_LOCATION }}
+      SUFFIX: ${{ vars.SUFFIX }}
+
       ARM_USE_OIDC: true
       ARM_USE_AZUREAD: true
       ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
