@@ -20,42 +20,46 @@ import org.springframework.web.context.WebApplicationContext;
 @WebAppConfiguration
 public class HolaControllerTest {
 
-    @Autowired
-    private WebApplicationContext webContext;
-    private MockMvc mockMvc;
+	@Autowired
+	private WebApplicationContext webContext;
+	private MockMvc mockMvc;
 
-    @Before
-    public void setupMockMvc() {
-	mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
-    }
+	@Before
+	public void setupMockMvc() {
+		mockMvc = MockMvcBuilders.webAppContextSetup(webContext).build();
+	}
 
-    @Test
-    public void raiz() throws Exception {
-	mockMvc.perform(get("/"))
-	.andExpect(status().is3xxRedirection())
-	.andExpect(header().string("Location", "/hola"));
-    }
-    
-    @Test
-    public void holaSinParametros() throws Exception {
-	mockMvc.perform(get("/hola"))
-	.andExpect(status().isOk())
-	.andExpect(view().name("hola"))
-	.andExpect(model().attributeExists("nombre"))
-	.andExpect(model().attribute("nombre", is("Mundo")))
-	.andExpect(content().string(containsString("¡Hola Mundo!")))
-	;
-    }
-    
-    @Test
-    public void holaUser() throws Exception {
-	mockMvc.perform(get("/hola?nombre=EMSAlumno"))
-	.andExpect(status().isOk())
-	.andExpect(view().name("hola"))
-	.andExpect(model().attributeExists("nombre"))
-	.andExpect(model().attribute("nombre", is("EMSAlumno")))
-	.andExpect(content().string(containsString("¡Hola EMSAlumno!")))
-	;
-    }
+	@Test
+	public void raiz() throws Exception {
+		mockMvc.perform(get("/"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(header().string("Location", "/hola"));
+	}
+
+	@Test
+	public void holaSinParametros() throws Exception {
+		mockMvc.perform(get("/hola"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("hola"))
+				.andExpect(model().attributeExists("nombre"))
+				.andExpect(model().attribute("nombre", is("Mundo")))
+				.andExpect(content().string(containsString("¡Hola Mundo!")));
+	}
+
+	@Test
+	public void holaUser() throws Exception {
+		mockMvc.perform(get("/hola?nombre=EMSAlumno"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("hola"))
+				.andExpect(model().attributeExists("nombre"))
+				.andExpect(model().attribute("nombre", is("EMSAlumno")))
+				.andExpect(content().string(containsString("¡Hola EMSAlumno!")));
+	}
+
+	@Test
+	public void testFalloArtificial() throws Exception {
+		mockMvc.perform(get("/hola"))
+				.andExpect(status().isInternalServerError()); 
+	}
 
 }
